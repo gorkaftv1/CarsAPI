@@ -7,6 +7,7 @@ const rateLimit = require('express-rate-limit');
 // Importar configuraciones
 const serverConfig = require('./src/config/server');
 const pool = require('./src/db/connection');
+const { specs, swaggerUi } = require('./src/config/swagger');
 
 // Importar rutas
 const carRoutes = require('./src/routes/carRoutes');
@@ -48,10 +49,40 @@ if (serverConfig.logging.logRequests) {
   });
 }
 
+// Documentación Swagger
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs, {
+  explorer: true,
+  customCss: '.swagger-ui .topbar { display: none }',
+  customSiteTitle: 'Cars API Documentation',
+}));
+
 // Rutas
 app.use('/cars', carRoutes);
 
-// Ruta de health check
+/**
+ * @swagger
+ * /health:
+ *   get:
+ *     summary: Verificar el estado de la API
+ *     tags: [Health]
+ *     responses:
+ *       200:
+ *         description: API funcionando correctamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: API is running
+ *                 environment:
+ *                   type: string
+ *                   example: development
+ */
 app.get('/health', (req, res) => {
   res.status(200).json({ 
     success: true, 
@@ -84,6 +115,7 @@ app.listen(serverConfig.port, serverConfig.host, () => {
   console.log(`✅ Server running on ${serverConfig.host}:${serverConfig.port}`);
   console.log(`📦 Environment: ${serverConfig.env}`);
   console.log(`🔗 Health check: http://localhost:${serverConfig.port}/health`);
+  console.log(`📚 API Docs: http://localhost:${serverConfig.port}/api-docs`);
 });
 
 // Manejo de cierre graceful
